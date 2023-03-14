@@ -1,6 +1,6 @@
 # ESP32-S3 Macro Keypad
-| Supported Targets  ESP32-S3 |
-
+Supported Targets:  ESP32-S3
+Developed on: ESP32-S3-DevKitC1-N32R8V by Expressif
 
 # Project Goal(s)
 
