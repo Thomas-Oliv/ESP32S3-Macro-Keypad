@@ -1,35 +1,27 @@
-| Supported Targets  ESP32-S3 |
-| -----------------  -------- |
-
 # ESP32-S3 Macro Keypad
-
-(See the README.md file in the upper level 'examples' directory for more information about examples.)
-
-This is the simplest buildable example. The example is used by command `idf.py create-project`
-that copies the project to user specified path and set it's name. For more information follow the [docs page](https://docs.espressif.com/projects/esp-idf/en/latest/api-guides/build-system.html#start-a-new-project)
+| Supported Targets  ESP32-S3 |
 
 
+# Project Goal(s)
 
-## How to use example
-We encourage the users to use the example as a template for the new projects.
-A recommended way is to follow the instructions on a [docs page](https://docs.espressif.com/projects/esp-idf/en/latest/api-guides/build-system.html#start-a-new-project).
+- Create a USB or Bluetooth Keypad which allows for single or multiple keystroke inputs at the press of a single button.
+    - For example: At the press of a single button, the device could simulate they keyboard input "Hello World!".
+- Responsive Keypad. No missed input and minimal input-delay.
+- Robust and easy to follow firmware.
+- Easy configurability through simple web or desktop application to read and write Configuration data onto the board's flash.
+    - It wouldn't make sense to reflash the entire device every single time you want to change macros.
+- Easy reprogrammability through Over-The-Air updates to flash new firmware.
 
-## Example folder contents
+#Current Features
+1) Task-based interface for NVS storage.
+2) Interrupt driven keypad matrix control and output generation.
+3) Task-based interface for keypad matrix.
 
-The project **sample_project** contains one source file in C language [main.c](main/main.c). The file is located in folder [main](main).
-
-ESP-IDF projects are built using CMake. The project build configuration is contained in `CMakeLists.txt`
-files that provide set of directives and instructions describing the project's source files and targets
-(executable, library, or both). 
-
-Below is short explanation of remaining files in the project folder.
-
-```
-├── CMakeLists.txt
-├── main
-│   ├── CMakeLists.txt
-│   └── main.c
-└── README.md                  This is the file you are currently reading
-```
-Additionally, the sample project contains Makefile and component.mk files, used for the legacy Make based build system. 
-They are not used or needed when building with CMake and idf.py.
+Todo:
+1) Extract command based on key and send data up through USB or Bluetooth stack to generate macro key output.
+    1) Setup Bluetooth/USB HID Stack.
+    2) Consume keystroke and integrate NVS command data into HID output.
+2) Write new commands to NVS over USB or Bluetooth.
+    1) Implement Interface on Host.
+    2) Implement Service on Device.
+3) Implement OTA Updates.
