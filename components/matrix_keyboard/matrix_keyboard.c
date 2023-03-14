@@ -10,6 +10,11 @@
 #include <string.h>
 #include "esp_log.h"
 
+
+#define MAKE_KEY_CODE(row, col) ((row << 8) | (col))
+#define GET_KEY_CODE_ROW(code)  ((code >> 8) & 0xFF)
+#define GET_KEY_CODE_COL(code)  (code & 0xFF)
+
 typedef struct matrix_kbd_t matrix_kbd_t;
 typedef struct isr_arg_t isr_arg_t;
 static void IRAM_ATTR gpio_callback(void *args);
@@ -377,4 +382,11 @@ void send_to_queue(matrix_kbd_handle_t mkbd_handle, void * arg){
 void receive_from_queue(matrix_kbd_handle_t mkbd_handle, void * arg){
     if(arg == NULL) return;
     xQueueReceive(mkbd_handle->queue, arg, portMAX_DELAY);
+}
+
+uint32_t get_indx(matrix_kbd_handle_t handle, uint32_t key_code){
+    //Offset row
+    uint32_t result = handle->config.nr_col_gpios*GET_KEY_CODE_ROW(key_code);
+    // add column;
+    return result + GET_KEY_CODE_COL(key_code);
 }

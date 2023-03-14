@@ -63,10 +63,3 @@ TaskHandle_t send_keyboard_control(keyboard_task_handle_t * handle , BaseType_t 
     xTaskCreatePinnedToCore(keyboard_task, "keyboard_task", CONFIG_BT_BTU_TASK_STACK_SIZE*3/2, handle, priority, &task_handle, APP_CPU_NUM );
     return task_handle;
 }
-
-
-TaskHandle_t consume_input_task(keyboard_task_handle_t * handle , BaseType_t priority){
-    TaskHandle_t task_handle = NULL;
-
-    return task_handle;
-}

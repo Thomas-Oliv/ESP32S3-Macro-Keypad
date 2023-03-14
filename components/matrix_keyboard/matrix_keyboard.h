@@ -4,10 +4,6 @@
 #include <stdint.h>
 #include "esp_err.h"
 
-#define MAKE_KEY_CODE(row, col) ((row << 8) | (col))
-#define GET_KEY_CODE_ROW(code)  ((code >> 8) & 0xFF)
-#define GET_KEY_CODE_COL(code)  (code & 0xFF)
-
 /**
  * @brief Type defined for matrix keyboard handle
  *
@@ -99,3 +95,5 @@ esp_err_t matrix_kbd_register_event_handler(matrix_kbd_handle_t mkbd_handle, mat
 void send_to_queue(matrix_kbd_handle_t mkbd_handle, void * arg);
 
 void receive_from_queue(matrix_kbd_handle_t mkbd_handle, void * arg);
+
+uint32_t get_indx(matrix_kbd_handle_t handle, uint32_t key_code);

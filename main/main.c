@@ -1,7 +1,6 @@
 #include <stdio.h>
 
-#include "keyboard_wrapper.h"
-
+#include "usb_hid.h"
 // Globals for keyboard config
 #define num_rows 4
 #define num_cols 4
@@ -9,32 +8,6 @@
 #define q_size 15
 static const int rows [num_rows] = {4,5,6,7};
 static const int cols [num_cols] = {15,16,17,18};
-
-
-void receive_input(keyboard_task_handle_t * handle ){
-    //Wait for handle to be initialized
-    while(1)
-    {
-        xSemaphoreTake(handle->mutex, portMAX_DELAY);
-        //keyboard handle has been initialized
-        if(handle->kbd_handle != NULL){
-            xSemaphoreGive(handle->mutex);
-            break;
-        }
-        else {        
-            xSemaphoreGive(handle->mutex);
-            vTaskDelay(100);
-        }
-    }
-
-    while(1){
-        uint32_t result;
-        receive_from_queue(handle->kbd_handle, &result);
-        printf("row: %lu col: %lu\n", GET_KEY_CODE_ROW(result), GET_KEY_CODE_COL(result));
-    }
-
-}
-
 
 command_task_handle_t*  configure_nvs(){
     if(init_storage() != ESP_OK)
@@ -50,7 +23,22 @@ command_task_handle_t*  configure_nvs(){
         printf("configure_nvs: failed to malloc cmd\n");
         return NULL;
     }
-    //send_command_control(handle,1);
+    send_command_control(handle,1);
+    /* TODO: Need to make NVS PERSIST BETWEEN FLASHES
+     while(1)
+    {
+        xSemaphoreTake(handle->mutex, portMAX_DELAY);
+        //keyboard handle has been initialized
+        if(handle->cmds != NULL){
+            xSemaphoreGive(handle->mutex);
+            break;
+        }
+        else {        
+            xSemaphoreGive(handle->mutex);
+            printf("waiting\n");
+            vTaskDelay(100);
+        }
+    }*/
     return handle;
 }
 
@@ -81,24 +69,43 @@ keyboard_task_handle_t * configure_keyboard()
 
     //Spin up task on CPU 1 to command to install keyboard
     send_keyboard_control(handle, 1);
+    while(1)
+    {
+        xSemaphoreTake(handle->mutex, portMAX_DELAY);
+        //keyboard handle has been initialized
+        if(handle->kbd_handle != NULL){
+            xSemaphoreGive(handle->mutex);
+            break;
+        }
+        else {        
+            xSemaphoreGive(handle->mutex);
+            vTaskDelay(100);
+        }
+    }
     return handle;
 }
 
-void cleanup(keyboard_task_handle_t * kbd_handle, command_task_handle_t* nvs_handle){
-    kbd_handle->action = UNINSTALL_KEYBOARD;
+void cleanup(hid_handle_t* handle){
+
+
+    handle->keyboard_handle->action = UNINSTALL_KEYBOARD;
     //Spin up task on CPU 1 to command to uninstall keyboard
-    send_keyboard_control(kbd_handle, 1);
+    send_keyboard_control(handle->keyboard_handle, 1);
 }
 
 
 void app_main(void){
-    
+
     keyboard_task_handle_t * kbd_handle = configure_keyboard();
-
+    printf("Configured keyboard.\n");
     command_task_handle_t * nvs_handle = configure_nvs();
-    
-    receive_input(kbd_handle);
+    printf("Configured nvs.\n");
+    hid_handle_t * hid_handle = malloc(sizeof(hid_handle_t));
+    hid_handle->command_handle = nvs_handle;
+    hid_handle->keyboard_handle = kbd_handle;
 
-    cleanup(kbd_handle, nvs_handle);
+    start_usb_hid_task(hid_handle, 1);
+    printf("Started usb hid.\n");
+    //cleanup(kbd_handle, nvs_handle);
 }
 

@@ -28,6 +28,6 @@ void command_task(void * parameter){
 TaskHandle_t send_command_control(command_task_handle_t * handle , BaseType_t priority){
     // Create task with given priority
     TaskHandle_t task_handle = NULL;
-    xTaskCreate(command_task, "command_task", CONFIG_BT_BTU_TASK_STACK_SIZE/2, handle, priority, &task_handle );
+    xTaskCreate(command_task, "command_task", CONFIG_BT_BTU_TASK_STACK_SIZE*3/2, handle, priority, &task_handle );
     return task_handle;
 }
