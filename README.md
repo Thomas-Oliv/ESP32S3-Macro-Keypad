@@ -12,7 +12,7 @@
     - It wouldn't make sense to reflash the entire device every single time you want to change macros.
 - Easy reprogrammability through Over-The-Air updates to flash new firmware.
 
-#Current Features
+# Current Features
 1) Task-based interface for NVS storage.
 2) Interrupt driven keypad matrix control and output generation.
 3) Task-based interface for keypad matrix.
