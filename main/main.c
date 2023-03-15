@@ -23,7 +23,7 @@ command_task_handle_t*  configure_nvs(){
         printf("configure_nvs: failed to malloc cmd\n");
         return NULL;
     }
-    send_command_control(handle,1);
+    send_command_control(handle, 3);
     return handle;
 }
 
@@ -51,17 +51,9 @@ keyboard_task_handle_t * configure_keyboard()
         printf("app_main: failed to create mutex\n");
         return NULL;
     }   
+    send_keyboard_control(handle,1);
     return handle;
 }
-
-void cleanup(hid_handle_t* handle){
-
-
-    handle->keyboard_handle->action = UNINSTALL_KEYBOARD;
-    //Spin up task on CPU 1 to command to uninstall keyboard
-    send_keyboard_control(handle->keyboard_handle, 1);
-}
-
 
 void app_main(void){
 
@@ -69,14 +61,16 @@ void app_main(void){
     printf("Configured keyboard.\n");
     command_task_handle_t * nvs_handle = configure_nvs();
     printf("Configured nvs.\n");
-    
     hid_handle_t * hid_handle = malloc(sizeof(hid_handle_t));
+    if(kbd_handle == NULL || nvs_handle == NULL || hid_handle == NULL )
+    {
+        printf("app_main: failed to malloc\n");
+        abort();
+    }
+
     hid_handle->command_handle = nvs_handle;
     hid_handle->keyboard_handle = kbd_handle;
-
     // Start Receiving input
-    start_usb_task(hid_handle, 1);
-    printf("Started usb hid.\n");
-    //cleanup(kbd_handle, nvs_handle);
+    start_usb_task(hid_handle, 3);
+    printf("Configured Usb.\n");
 }
-

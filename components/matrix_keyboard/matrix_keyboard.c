@@ -375,16 +375,17 @@ esp_err_t matrix_kbd_register_event_handler(matrix_kbd_handle_t mkbd_handle, mat
 }
 
 void send_to_queue(matrix_kbd_handle_t mkbd_handle, void * arg){
-    if(arg == NULL) return;
+    if(mkbd_handle == NULL || arg == NULL || mkbd_handle->queue == NULL) return;
     xQueueSendFromISR(mkbd_handle->queue, arg, NULL);
 }
 
 void receive_from_queue(matrix_kbd_handle_t mkbd_handle, void * arg){
-    if(arg == NULL) return;
+    if(mkbd_handle == NULL || arg == NULL || mkbd_handle->queue == NULL) return;
     xQueueReceive(mkbd_handle->queue, arg, portMAX_DELAY);
 }
 
 uint32_t get_indx(matrix_kbd_handle_t handle, uint32_t key_code){
+    if(handle == NULL) return UINT32_MAX;
     //Offset row
     uint32_t result = handle->config.nr_col_gpios*GET_KEY_CODE_ROW(key_code);
     // add column;
