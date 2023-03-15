@@ -15,17 +15,64 @@
 #define USB_PID   0x4002
 #define USB_BCD   0x0200
 
-#define TUSB_DESC_TOTAL_LEN      (TUD_CONFIG_DESC_LEN +TUD_HID_DESC_LEN)
+#define TUSB_DESC_TOTAL_LEN      (TUD_CONFIG_DESC_LEN +TUD_CDC_DESC_LEN+  TUD_HID_DESC_LEN)
 #define VBUS_MONITORING_GPIO_NUM (GPIO_NUM_0)
 
-const uint8_t hid_report_descriptor[] = {TUD_HID_REPORT_DESC_KEYBOARD(HID_REPORT_ID(HID_ITF_PROTOCOL_KEYBOARD))};
+enum {
+    ITF_NUM_CDC=0,
+    ITF_NUM_CDC_DATA,
+    ITF_NUM_HID,
+    ITF_NUM_TOTAL
+};
+
+enum {
+    // Available USB Endpoints: 5 IN/OUT EPs and 1 IN EP
+    EP_EMPTY = 0,
+    EPNUM_0_CDC_NOTIF,
+    EPNUM_0_CDC,
+    EPNUM_HID,
+
+};
+
+
+const uint8_t hid_report_descriptor[] = {TUD_HID_REPORT_DESC_KEYBOARD()};
 
 static const uint8_t hid_configuration_descriptor[] = {
     // Configuration number, interface count, string index, total length, attribute, power in mA
-    TUD_CONFIG_DESCRIPTOR(1, 1, 0, TUSB_DESC_TOTAL_LEN, TUSB_DESC_CONFIG_ATT_REMOTE_WAKEUP, 100),
+    TUD_CONFIG_DESCRIPTOR(1, ITF_NUM_TOTAL, 0, TUSB_DESC_TOTAL_LEN, TUSB_DESC_CONFIG_ATT_REMOTE_WAKEUP, 100),
 
     // Interface number, string index, boot protocol, report descriptor len, EP In address, size & polling interval
-    TUD_HID_DESCRIPTOR(0, 2, HID_ITF_PROTOCOL_NONE, sizeof(hid_report_descriptor), 0x83, 16, 10),
+    TUD_HID_DESCRIPTOR(ITF_NUM_HID, 2, HID_ITF_PROTOCOL_NONE, sizeof(hid_report_descriptor), 0x80 | EPNUM_HID, CFG_TUD_HID_EP_BUFSIZE, 10),
+    TUD_CDC_DESCRIPTOR(ITF_NUM_CDC, 4, 0x80 | EPNUM_0_CDC_NOTIF, 8, EPNUM_0_CDC, 0x80 | EPNUM_0_CDC, CFG_TUD_CDC_EP_BUFSIZE),
+};
+
+char const* string_desc_arr [] =
+{
+  (const char[]) { 0x09, 0x04 }, // 0: is supported language is English (0x0409)
+  CONFIG_TINYUSB_DESC_MANUFACTURER_STRING,        // 1: Manufacturer
+  CONFIG_TINYUSB_DESC_PRODUCT_STRING,             // 2: Product
+  CONFIG_TINYUSB_DESC_SERIAL_STRING,              // 3: Serials, should use chip ID
+  CONFIG_TINYUSB_DESC_CDC_STRING,                 // 4: CDC Interface
+};
+
+//TODO: TRY TO FIX THIS?!
+tusb_desc_device_t const descriptor_config = {
+    .bLength = sizeof(descriptor_config),
+    .bDescriptorType = TUSB_DESC_DEVICE,
+    .bcdUSB = USB_BCD,
+
+    .bDeviceClass = 0x00,
+    .bDeviceSubClass = 0x00,
+    .bDeviceProtocol = 0x00,
+    .bMaxPacketSize0 = CFG_TUD_ENDPOINT0_SIZE,
+
+    .idVendor = USB_VID, // This is Espressif VID. This needs to be changed according to Users / Customers
+    .idProduct = USB_PID,
+    .bcdDevice = CONFIG_TINYUSB_DESC_BCD_DEVICE,
+    .iManufacturer = 0x01,
+    .iProduct = 0x02,
+    .iSerialNumber = 0x03,
+    .bNumConfigurations = 0x01
 };
 
 /* TINY USB HID Callbacks */
@@ -79,14 +126,29 @@ static void usb_task(void * parameter)
     };
     gpio_config(&vbus_gpio_config);
 
-    const tinyusb_config_t hid_confg = {
-        .device_descriptor =NULL,
-        .string_descriptor =NULL,
+    const tinyusb_config_t tusb_cfg = {
+        .device_descriptor =&descriptor_config,
+        .string_descriptor =string_desc_arr,
+        .string_descriptor_count = sizeof(string_desc_arr) / sizeof(string_desc_arr[0]),
         .external_phy = false,
         .configuration_descriptor = hid_configuration_descriptor,
+        //.self_powered = true,
+        //.vbus_monitor_io = VBUS_MONITORING_GPIO_NUM,
     };
-    tinyusb_driver_install(&hid_confg);
+    tinyusb_driver_install(&tusb_cfg);
 
+    /*
+    tinyusb_config_cdcacm_t acm_cfg = {
+        .usb_dev = TINYUSB_USBDEV_0,
+        .cdc_port = TINYUSB_CDC_ACM_0,
+        .rx_unread_buf_sz = CONFIG_TINYUSB_CDC_RX_BUFSIZE,
+        .callback_rx = &tinyusb_cdc_rx_callback,
+        .callback_rx_wanted_char = NULL,
+        .callback_line_state_changed = NULL,
+        .callback_line_coding_changed = NULL
+    };
+    tusb_cdc_acm_init(&acm_cfg);
+    */
     while (1) {
         if (tud_mounted()) {
             uint32_t key_code;

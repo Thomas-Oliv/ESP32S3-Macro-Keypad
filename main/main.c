@@ -24,21 +24,6 @@ command_task_handle_t*  configure_nvs(){
         return NULL;
     }
     send_command_control(handle,1);
-    /* TODO: Need to make NVS PERSIST BETWEEN FLASHES
-     while(1)
-    {
-        xSemaphoreTake(handle->mutex, portMAX_DELAY);
-        //keyboard handle has been initialized
-        if(handle->cmds != NULL){
-            xSemaphoreGive(handle->mutex);
-            break;
-        }
-        else {        
-            xSemaphoreGive(handle->mutex);
-            printf("waiting\n");
-            vTaskDelay(100);
-        }
-    }*/
     return handle;
 }
 
@@ -66,22 +51,6 @@ keyboard_task_handle_t * configure_keyboard()
         printf("app_main: failed to create mutex\n");
         return NULL;
     }   
-
-    //Spin up task on CPU 1 to command to install keyboard
-    send_keyboard_control(handle, 1);
-    while(1)
-    {
-        xSemaphoreTake(handle->mutex, portMAX_DELAY);
-        //keyboard handle has been initialized
-        if(handle->kbd_handle != NULL){
-            xSemaphoreGive(handle->mutex);
-            break;
-        }
-        else {        
-            xSemaphoreGive(handle->mutex);
-            vTaskDelay(100);
-        }
-    }
     return handle;
 }
 
@@ -100,11 +69,13 @@ void app_main(void){
     printf("Configured keyboard.\n");
     command_task_handle_t * nvs_handle = configure_nvs();
     printf("Configured nvs.\n");
+    
     hid_handle_t * hid_handle = malloc(sizeof(hid_handle_t));
     hid_handle->command_handle = nvs_handle;
     hid_handle->keyboard_handle = kbd_handle;
 
-    start_usb_hid_task(hid_handle, 1);
+    // Start Receiving input
+    start_usb_task(hid_handle, 1);
     printf("Started usb hid.\n");
     //cleanup(kbd_handle, nvs_handle);
 }
