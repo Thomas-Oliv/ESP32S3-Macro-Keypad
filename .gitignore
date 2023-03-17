@@ -54,3 +54,5 @@ build/
 .vscode/
 managed_components/
 dependencies.lock
+tools/__pycache__/
+
