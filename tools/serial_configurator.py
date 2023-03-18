@@ -1,9 +1,9 @@
 
 import sys
 from serial.tools.list_ports import comports
-from PyQt6.QtWidgets import QApplication,QWidget, QMainWindow,QVBoxLayout, QMessageBox
+from PyQt6.QtWidgets import QApplication, QWidget, QMainWindow, QVBoxLayout, QMessageBox
 from custom_widgets import *
-
+import pickle
 
 WIDTH = 1000
 HEIGHT = 800
@@ -18,7 +18,7 @@ class MainWindow(QMainWindow):
         self.num_cols =3
         self.hwid = '303A:4002'
         self.setMaximumSize(WIDTH, HEIGHT)
-        # TODO: Replace with proper initialization
+
         self.data= [[]] * self.num_rows*self.num_cols
 
         self.setWindowTitle("Keypad Configurator")
@@ -38,13 +38,13 @@ class MainWindow(QMainWindow):
         loadButtons =LoadButtons()
         loadButtons.load_file.connect(self.__load_file)
         loadButtons.load_from_board.connect(self.__load_from_board)
-        layout.addWidget(LoadButtons(),stretch=1)
+        layout.addWidget(loadButtons,stretch=1)
         layout.addWidget(resize_widget,stretch=1)
         layout.addWidget(self.grid_widget,stretch=6)
         saveButtons = SaveButtons()
         saveButtons.save_file.connect(self.__save_file)
         saveButtons.flash_to_board.connect(self.__flash_to_board)
-        layout.addWidget(SaveButtons(),stretch=1)
+        layout.addWidget(saveButtons,stretch=1)
         
 
         self.widget = QWidget()
@@ -67,16 +67,22 @@ class MainWindow(QMainWindow):
         dlg.resize(WIDTH,HEIGHT)
         if dlg.exec():
             self.__send_alert("Edit Information", "Updated config successfully.", QMessageBox.Icon.Information)
-            print("result:")
-            print(dlg.get_data())
             self.data[row*self.num_cols+col] = dlg.get_data()
 
     def __on_resize(self, rows,cols):
-        # TODO: RESIZE DATA GRID HERE AS WELL
+        temp =[]
+
+        for i in range(rows):
+            for j in range(cols):
+                if(i < self.num_rows and j < self.num_cols):
+                    temp.append(self.data[i*self.num_cols+j])
+                else:
+                    temp.append([])
+
+        self.data = temp
         self.num_rows = rows
         self.num_cols = cols
         self.grid_widget.set_size(self.num_rows,self.num_cols)
-
     
     def __send_alert(self,title:str, message:str,  icon):
         dlg = QMessageBox(self)
@@ -87,20 +93,18 @@ class MainWindow(QMainWindow):
         dlg.exec()
 
     def __save_file(self, fname):
-        print("TODO: SAVE")
-        return
+        with open(fname, "wb") as file_out:
+            pickle.dump(self.data, file_out)
     
     def __flash_to_board(self):
-        print("TODO: FLASH")
-        return
+        print("TODO: FLASH -- Serialize and talk over cdc")
     
     def __load_file(self, fname):
-        print("TODO: LOAD")
-        return
+        with open(fname, "rb") as file_in:
+            self.data = pickle.load(file_in)
     
     def __load_from_board(self):
-        print("TODO: LOAD FROM BOARD")
-        return
+        print("TODO: LOAD FROM BOARD -- De-Serialize and talk over cdc")
 
 app = QApplication(sys.argv)
 window = MainWindow()

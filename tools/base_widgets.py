@@ -1,10 +1,8 @@
 import os
-from PyQt6.QtCore import pyqtSignal, Qt,QEvent
-from PyQt6.QtWidgets import QFileDialog, QLabel,QWidget,QPushButton,QGridLayout, QSizePolicy, QHBoxLayout ,QLineEdit, QSpinBox, QDialog, QDialogButtonBox,QVBoxLayout, QCheckBox,QComboBox, QListWidget, QListWidgetItem
-from PyQt6.QtGui import QFont,QStandardItemModel
+from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtWidgets import QLabel,QWidget,QPushButton, QSizePolicy, QHBoxLayout ,QLineEdit, QSpinBox, QCheckBox, QComboBox
+from PyQt6.QtGui import QFont
 from usb_hid import *
-
-#TODO: CHECKBOX SAVE VALUE,
 
 class ConfigComboBox(QWidget):
     index_changed = pyqtSignal(int)

@@ -1,6 +1,6 @@
 import os
-from PyQt6.QtCore import pyqtSignal,QSize
-from PyQt6.QtWidgets import QFileDialog,QWidget,QGridLayout, QHBoxLayout , QDialog, QDialogButtonBox,QVBoxLayout, QScrollArea
+from PyQt6.QtCore import pyqtSignal, QSize, Qt
+from PyQt6.QtWidgets import QFileDialog, QWidget, QGridLayout, QHBoxLayout , QDialog, QVBoxLayout, QScrollArea
 from usb_hid import *
 from base_widgets import *
 
@@ -56,9 +56,9 @@ class LoadButtons(QWidget):
         fname  = QFileDialog.getOpenFileName(
             self,
             caption="Open File",
-            filter="Binary Files (*.bin)",
+            filter="Pickle Files (*.pickle)",
         )[0]
-        if fname and fname.endswith(".bin") and os.path.exists(fname):
+        if fname and fname.endswith(".pickle") and os.path.exists(fname):
             self.load_file.emit(fname)
         else:
             print("file does not exists\r\n")
@@ -85,9 +85,9 @@ class SaveButtons(QWidget):
         fname  = QFileDialog.getSaveFileName(
             self,
             caption="Open File",
-            filter="Binary Files (*.bin)",
+            filter="Pickle Files (*.pickle)",
         )[0]
-        if fname and fname.endswith(".bin") and os.path.isdir(os.path.dirname(fname)):
+        if fname and fname.endswith(".pickle") and os.path.isdir(os.path.dirname(fname)):
             self.save_file.emit(fname)
         else:
             print("Path to file doesn't exist\r\n")
