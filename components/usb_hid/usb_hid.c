@@ -180,10 +180,10 @@ static void usb_task(void * parameter)
                 write codes to tud_hid_keyboard_report :)
                 */
 
-                uint8_t keycode[6] = {HID_KEY_A};
-                tud_hid_keyboard_report(HID_ITF_PROTOCOL_KEYBOARD, 0, keycode);
+                uint8_t keycode[6] = {HID_KEY_A+indx};
+                tud_hid_keyboard_report( HID_ITF_PROTOCOL_KEYBOARD, 0, keycode);
                 vTaskDelay(pdMS_TO_TICKS(50));
-                tud_hid_keyboard_report(HID_ITF_PROTOCOL_KEYBOARD, 0, NULL);
+                tud_hid_keyboard_report( HID_ITF_PROTOCOL_KEYBOARD, 0, NULL);
             }
         }
     }

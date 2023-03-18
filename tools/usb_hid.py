@@ -11,18 +11,21 @@ def GetKeyDropDownValues(shifted: bool ):
     data = []
 
     for name, value in common_keys:
-        data.append(name,value)
+        data.append((name,value))
     
     for name_lower,name_upper, value in shifted_keys:
         if(shifted):
-            data.append(name_upper, value)
+            data.append((name_upper, value))
         else:
-            data.append(name_lower, value)
+            data.append((name_lower, value))
 
     return data  
 
 def shifted(keycode):
     return keycode & modifiers[2][1]  or keycode & modifiers[6][1]
+
+
+
 modifiers = [ 
     ("NONE", 0x00), 
     ("Left Control" , 0x01), 

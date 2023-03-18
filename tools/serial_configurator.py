@@ -4,6 +4,10 @@ from serial.tools.list_ports import comports
 from PyQt6.QtWidgets import QApplication,QWidget, QMainWindow,QVBoxLayout, QMessageBox
 from custom_widgets import *
 
+
+WIDTH = 1000
+HEIGHT = 800
+
 # Subclass QMainWindow to customize your application's main window
 class MainWindow(QMainWindow):
     
@@ -13,7 +17,7 @@ class MainWindow(QMainWindow):
         self.num_rows =3
         self.num_cols =3
         self.hwid = '303A:4002'
-
+        self.setMaximumSize(WIDTH, HEIGHT)
         # TODO: Replace with proper initialization
         self.data= [[]] * self.num_rows*self.num_cols
 
@@ -31,10 +35,17 @@ class MainWindow(QMainWindow):
 
         layout = QVBoxLayout()
         layout.addWidget(hwid_widget,stretch=1)
+        loadButtons =LoadButtons()
+        loadButtons.load_file.connect(self.__load_file)
+        loadButtons.load_from_board.connect(self.__load_from_board)
         layout.addWidget(LoadButtons(),stretch=1)
         layout.addWidget(resize_widget,stretch=1)
         layout.addWidget(self.grid_widget,stretch=6)
+        saveButtons = SaveButtons()
+        saveButtons.save_file.connect(self.__save_file)
+        saveButtons.flash_to_board.connect(self.__flash_to_board)
         layout.addWidget(SaveButtons(),stretch=1)
+        
 
         self.widget = QWidget()
         self.widget.setLayout(layout)
@@ -52,9 +63,13 @@ class MainWindow(QMainWindow):
         self.__send_alert("Device Information", "Failed to find device.", QMessageBox.Icon.Information)
 
     def __grid_selected(self, row,col):
-        dlg = EditConfigDialog(self.data[row*self.num_cols+col])
+        dlg = EditConfigDialog(self.data[row*self.num_cols+col], WIDTH, HEIGHT)
+        dlg.resize(WIDTH,HEIGHT)
         if dlg.exec():
             self.__send_alert("Edit Information", "Updated config successfully.", QMessageBox.Icon.Information)
+            print("result:")
+            print(dlg.get_data())
+            self.data[row*self.num_cols+col] = dlg.get_data()
 
     def __on_resize(self, rows,cols):
         # TODO: RESIZE DATA GRID HERE AS WELL
@@ -71,7 +86,25 @@ class MainWindow(QMainWindow):
         dlg.setIcon(icon)
         dlg.exec()
 
+    def __save_file(self, fname):
+        print("TODO: SAVE")
+        return
+    
+    def __flash_to_board(self):
+        print("TODO: FLASH")
+        return
+    
+    def __load_file(self, fname):
+        print("TODO: LOAD")
+        return
+    
+    def __load_from_board(self):
+        print("TODO: LOAD FROM BOARD")
+        return
+
 app = QApplication(sys.argv)
 window = MainWindow()
 window.show()
+
+window.resize(WIDTH,HEIGHT)
 app.exec()

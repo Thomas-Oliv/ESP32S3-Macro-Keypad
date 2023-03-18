@@ -1,120 +1,10 @@
 import os
-from PyQt6.QtCore import pyqtSignal, Qt
-from PyQt6.QtWidgets import QFileDialog, QLabel,QWidget,QPushButton,QGridLayout, QSizePolicy, QHBoxLayout ,QLineEdit, QSpinBox, QDialog, QDialogButtonBox,QVBoxLayout, QCheckBox,QComboBox
-from PyQt6.QtGui import QFont
+from PyQt6.QtCore import pyqtSignal,QSize
+from PyQt6.QtWidgets import QFileDialog,QWidget,QGridLayout, QHBoxLayout , QDialog, QDialogButtonBox,QVBoxLayout, QScrollArea
 from usb_hid import *
+from base_widgets import *
 
 
-
-class ConfigCheckBox(QCheckBox):
-    id_state_changed =pyqtSignal(int, int)
-    def __init__(self, id):
-        super().__init__()
-        self.id = id
-        self.stateChanged.connect(self.__id_state_changed)
-
-    def __id_state_changed(self,e):
-        self.id_state_changed.emit(self.e,id)
-
-class ConfigComboBox(QWidget):
-    index_changed = pyqtSignal(int)
-    def __init__(self, label: str, data):
-        super().__init__()
-        label_widget = QLabel(label+":")
-        label_widget.setFont(QFont('Times', 15))
-
-        self.input_field = QComboBox()
-        self.input_field.setFont(QFont('Times', 15))
-        self.set_data(data)
-        self.input_field.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
-        self.input_field.currentIndexChanged.connect(self.__index_changed)
-
-        layout = QHBoxLayout()
-        layout.addWidget(label_widget)
-        layout.addWidget(self.input_field)
-        self.set_data(data)
-
-
-    def set_data(self, data):
-        for i in reversed(range(self.input_field.count())): 
-            self.input_field.removeItem(i)
-        for name, id in data:
-            self.input_field.addItem(name,id)
-
-            
-    def __index_changed(self, e):
-        self.value_changed.emit(e)
-    
-
-class GridButton(QPushButton):
-    clicked_pos = pyqtSignal(int,int)
-    def __init__(self, label:str, x_pos:int, y_pos:int):
-        super(GridButton, self).__init__(label) 
-        self.x_pos = x_pos
-        self.y_pos = y_pos
-        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
-        self.setFont(QFont('Times', 15))
-        self.clicked.connect(self.__clicked_pos)
-    # On click we return pos
-    def __clicked_pos(self, e):
-        self.clicked_pos.emit(self.x_pos, self.y_pos)
-
-class UIButton(QPushButton):
-    def __init__(self, label:str):
-        super(UIButton, self).__init__(label)  
-        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
-        self.setFont(QFont('Times', 15))
-
-class SpinInputField(QWidget):
-    value_changed = pyqtSignal(int)
-    def __init__(self, label: str, default_value:int):
-        super(SpinInputField, self).__init__()
-        label_widget = QLabel(label+":")
-        label_widget.setFont(QFont('Times', 15))
-
-        input_field = QSpinBox()
-        input_field.setFont(QFont('Times', 15))
-        input_field.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
-        input_field.setValue(default_value)
-        input_field.valueChanged.connect(self._value_changed)
-
-        layout = QHBoxLayout()
-        layout.addWidget(label_widget)
-        layout.addWidget(input_field)
-        self.setLayout(layout)
-
-    def _value_changed(self, e):
-        self.value_changed.emit(e)
-
-class InputField(QWidget):
-    text_changed = pyqtSignal(str)
-    check_for_device = pyqtSignal()
-    def __init__(self, label: str, default_value:str):
-        super(InputField,self).__init__()
-        label_widget = QLabel(label+":")
-        label_widget.setFont(QFont('Times', 15))
-
-        input_field = QLineEdit()
-        input_field.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
-        input_field.setText(default_value)
-        input_field.setFont(QFont('Times', 15))
-        input_field.setPlaceholderText("Value of "+label)
-        input_field.textChanged.connect(self.__text_changed)
-
-        button = UIButton("Check For Device")
-        button.clicked.connect(self.__check_for_device)
-
-        layout = QHBoxLayout()
-        layout.addWidget(label_widget)
-        layout.addWidget(input_field)
-        layout.addWidget(button)
-        self.setLayout(layout)
-
-    def __check_for_device(self):
-        self.check_for_device.emit()
-            
-    def __text_changed(self, e):
-        self.text_changed.emit(e)
 
 
 class ButtonGrid(QWidget):
@@ -174,7 +64,6 @@ class LoadButtons(QWidget):
             print("file does not exists\r\n")
     
     def __load_from_board(self):
-        print("TODO: Load from board\r\n")
         self.load_from_board.emit()
 
 
@@ -192,7 +81,7 @@ class SaveButtons(QWidget):
         layout.addWidget(button_flash_to_board)
         self.setLayout(layout)
 
-    def __save_file(self, e):
+    def __save_file(self):
         fname  = QFileDialog.getSaveFileName(
             self,
             caption="Open File",
@@ -204,7 +93,6 @@ class SaveButtons(QWidget):
             print("Path to file doesn't exist\r\n")
     
     def __load_from_board(self):
-        print("TODO: flash to board\r\n")
         self.flash_to_board.emit()
 
 class GridResize(QWidget):
@@ -214,10 +102,10 @@ class GridResize(QWidget):
         self.num_rows = rows
         self.num_cols = cols
 
-        num_rows = SpinInputField("Rows: ",  self.num_rows)  
+        num_rows = SpinInputField("Rows: ",  self.num_rows,15)  
         num_rows.value_changed.connect(self.__rows_changed)
 
-        num_cols = SpinInputField("Cols: ", self.num_cols)
+        num_cols = SpinInputField("Cols: ", self.num_cols, 15)
         num_cols.value_changed.connect(self.__cols_changed)
         
         resize = UIButton("Resize Grid")
@@ -238,68 +126,153 @@ class GridResize(QWidget):
         self.num_cols = e
 
 
+
+
 class ConfigRow(QWidget):
     def __init__(self, row_data: key_stroke):
         super().__init__()
         self.row_data = row_data
         self.dropdown_data =GetKeyDropDownValues(shifted(self.row_data.key_code))
-        layout =QHBoxLayout()
-        for mod in modifiers[1:]:
-            check_box = ConfigCheckBox()
-            check_box.setCheckState(Qt.CheckState.Checked if row_data.modifier & mod[1] else Qt.CheckState.Unchecked)
-            check_box.id_state_changed.connect(self.__check_box_state_changed)
-            check_box.setText(mod[0])
-            layout.addWidget(check_box)
+        layout = QHBoxLayout()
+        
+        combo_menu = QWidget()
+        combo_menu_layout = QVBoxLayout()
 
-        if(row_data.key_code == delay_code ):
-            delay_field = SpinInputField("Delay (ms)",row_data.delay)
+        row_1 = QWidget()
+        row_2 = QWidget()
+
+        row_1_layout = QHBoxLayout()
+        row_2_layout = QHBoxLayout()
+        for i in range(1, len(modifiers)):
+            check_box = ConfigCheckBox(modifiers[i][1], self.row_data.modifier & modifiers[i][1] )
+            check_box.setChecked(modifiers[i][1] & self.row_data.modifier)
+            check_box.id_state_changed.connect(self.__check_box_state_changed)
+            check_box.setText(modifiers[i][0])
+            if(i < len(modifiers)/2):
+                row_1_layout.addWidget(check_box)
+            else:
+                row_2_layout.addWidget(check_box)
+        row_1.setLayout(row_1_layout)
+        row_2.setLayout(row_2_layout)
+
+        combo_menu_layout.addWidget(row_1)
+        combo_menu_layout.addWidget(row_2)
+        combo_menu.setLayout(combo_menu_layout)
+
+
+        layout.addWidget(combo_menu,stretch=6)
+
+
+        if(self.row_data.key_code == delay_code ):
+            delay_field = SpinInputField("Delay (ms)",self.row_data.delay,65535)
             delay_field.value_changed.connect(self.__update_delay)
-            layout.addWidget(delay_field)
+            layout.addWidget(delay_field,stretch=3)
         else:
-            keycode_field = ConfigComboBox("Key Code",self.dropdown_data)
-            keycode_field.index_changed.connect(self.__index_changed)
-            layout.addWidget(keycode_field)
+            self.keycode_field = ConfigComboBox("Key Code",self.dropdown_data, self.row_data.key_code)
+            self.keycode_field.index_changed.connect(self.__index_changed)
+            layout.addWidget(self.keycode_field,stretch=3)
 
         delete_btn = UIButton("Delete")
         delete_btn.clicked.connect(self.__delete)
+        layout.addWidget(delete_btn,stretch=1)
+        self.setLayout(layout)
 
     def __delete(self):
         self.deleteLater()
         
     def __update_delay(self,val):
         self.row_data.delay = val
+
     def __index_changed(self, indx):
         self.row_data.key_code = self.dropdown_data[indx][1]
 
     def __check_box_state_changed(self, state, id):
         if state:
             #set bit
-            self.row_data.key_code |= modifiers[id][1]
+            self.row_data.modifier |= id
         else:
             #clear bit
-            self.row_data.key_code &= ~modifiers[id][1]
-        
-        self.dropdown_data =GetKeyDropDownValues(shifted(self.row_data.key_code))
-            
+            self.row_data.modifier &= ~id
 
+        #update dropdown options on shift change
+        if (self.row_data.key_code != delay_code) and ( id == 0x02 or id == 0x20):
+            self.dropdown_data= GetKeyDropDownValues(shifted(self.row_data.key_code))
+            self.keycode_field.set_data(self.dropdown_data)
+
+    def get_data(self):
+        return self.row_data
+    
+
+    
+class SaveConfigButtons(QWidget):
+    save = pyqtSignal()
+    cancel = pyqtSignal()
+    def __init__(self ):
+        super().__init__()
+        button_save= UIButton("Save")  
+        button_save.clicked.connect(self.__save)
+        button_cancel = UIButton("Cancel")
+        button_cancel.clicked.connect(self.__cancel)
+        layout = QHBoxLayout()
+        layout.addWidget(button_save)
+        layout.addWidget(button_cancel)
+        self.setLayout(layout)
+
+    def __save(self):
+        self.save.emit()
+    
+    def __cancel(self):
+        self.cancel.emit()
 
 
 class EditConfigDialog(QDialog):
-    def __init__(self,config_data, parent=None):
-        super().__init__(parent)
-        self.layout = QVBoxLayout()
-
+    def __init__(self,config_data, max_w , max_h):
+        super().__init__()
         self.setWindowTitle("Edit")
-        #TODO: print out rows
+        self.setMaximumSize(max_w,max_h)
+        self.resize(max_w,max_h)
+
+        row_scroll = QScrollArea()
+        self.rowWidget = QWidget()
+        rowLayout = QVBoxLayout()
+        rowLayout.setAlignment(Qt.AlignmentFlag.AlignTop)
         for row in config_data:
-            self.layout.addWidget(ConfigRow(row))
+            rowLayout.addWidget(ConfigRow(row))
+        self.rowWidget.setLayout(rowLayout)
+        row_scroll.setWidget(self.rowWidget)
+        row_scroll.setWidgetResizable(True)
 
+        buttonWidget = QWidget()
+        buttonWidget.resize(QSize(int(max_w/2),int(max_h/16)))
+        buttonLayout = QHBoxLayout()
+        addDelayButton = UIButton("Add Delay")
+        addDelayButton.clicked.connect(self.__addDelay)
+        addKeyCodeButton = UIButton("Add Keystroke")
+        addKeyCodeButton.clicked.connect(self.__addInput)
 
-        QBtn = QDialogButtonBox.StandardButton.Cancel | QDialogButtonBox.StandardButton.Save
-        self.buttonBox = QDialogButtonBox(QBtn)
-        self.buttonBox.accepted.connect(self.accept)
-        self.buttonBox.rejected.connect(self.reject)
+        buttonLayout.addWidget(addDelayButton)
+        buttonLayout.addWidget(addKeyCodeButton)
+        buttonWidget.setLayout(buttonLayout)
 
-        self.layout = QVBoxLayout()
-        self.layout.addWidget(self.buttonBox)
-        self.setLayout(self.layout)
+        saveButtons = SaveConfigButtons()
+        saveButtons.save.connect(self.accept)
+        saveButtons.cancel.connect(self.reject)
+
+        self.mainLayout = QVBoxLayout()
+        self.mainLayout.addWidget(buttonWidget,stretch=1)
+        self.mainLayout.addWidget(row_scroll,stretch=8)
+        self.mainLayout.addWidget(saveButtons,stretch=1)
+        self.setLayout(self.mainLayout)
+
+    def __addDelay(self):
+        self.rowWidget.layout().addWidget(ConfigRow(row_data=key_stroke(0x00,0x01)))
+
+    def __addInput(self):
+        self.rowWidget.layout().addWidget(ConfigRow(row_data=key_stroke(0x00,0x00)))
+
+    def get_data(self):
+        return_data =[]
+        for i in range(self.rowWidget.layout().count()):
+            row = self.rowWidget.layout().itemAt(i).widget()
+            return_data.append(row.get_data())
+        return return_data
