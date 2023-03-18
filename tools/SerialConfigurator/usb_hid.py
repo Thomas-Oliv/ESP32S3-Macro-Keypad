@@ -1,43 +1,117 @@
+from enum import Enum
+from struct import pack, unpack_from
+
+L_SHIFT = 0x02
+R_SHIFT = 0x20
+#key code used to represent a delay type
 delay_code = 0x01
+#number of bytes required to pack a single key stroke command
+key_stroke_size = 0x04
 
-class key_stroke():
-    def __init__(self, modif, code, delay_time=0):
-        self.modifier = modif
-        self.key_code = code
-        self.delay = 0
+class KeyStroke():
+    def __init__(self, modifier, code, delay_time=0):
+        self.modifier:int = modifier # use for keycode modifier or delay units
+        self.key_code:int = code    #keycode or delay id
+        self.delay:int = delay_time #delay amount
 
 
-def GetKeyDropDownValues(shifted: bool ):
+class Device():
+    hwid: str
+    rows: int
+    cols: int
+    data: list[list[KeyStroke]]
+
+    def __init__(self, hwid, rows, cols):
+        self.hwid = hwid
+        self.rows=rows
+        self.cols=cols
+        self.data= [[]]*self.rows*self.cols
+
+
+def get_key_dropdown_values(modifier ):
     data = []
-
+    is_shifted = modifier & modifiers[2][1]  or modifier & modifiers[6][1]
     for name, value in common_keys:
         data.append((name,value))
     
-    for name_lower,name_upper, value in shifted_keys:
-        if(shifted):
+    for name_lower, name_upper, value in shifted_keys:
+        if(is_shifted):
             data.append((name_upper, value))
         else:
             data.append((name_lower, value))
-
     return data  
 
-def shifted(keycode):
-    return keycode & modifiers[2][1]  or keycode & modifiers[6][1]
+# VERIFIED
+def serialize_data(data: list[list[KeyStroke]]):
+    packed_result =b''
+    total_size =0
+    for command in data:
+        size = 0
+        packed_keycode = b''
+        for keystroke in command:
+            #pack keystrokes and keep track of number of keystrokes stored
+            packed_keycode += pack("<BBH",keystroke.modifier,keystroke.key_code,keystroke.delay)
+            size += 1
+        #keep track of number of bytes used
+        total_size += size*key_stroke_size + 2
+        #write number of keystrokes to beginning of packed block
+        packed_result += pack("<H", size) + packed_keycode
+    #return packed object and total size in bytes
+    return packed_result, total_size
+
+#Should be good
+def deserialize_data( packed_obj, total_size):
+    final_result = []
+    indx =0
+    state = DeserializeState.START_BLOCK
+    while(indx < total_size):
+        match state:
+            case DeserializeState.START_BLOCK:
+                #Get length of command block
+                command = []
+                cmd_len = unpack_from("<H",packed_obj, indx)
+                offset = 0
+                indx += 1
+                state = DeserializeState.KEYSTROKE
+            case DeserializeState.KEYSTROKE:
+                #Keep unpacking each command one keystroke at a time
+                if(offset < cmd_len):
+                    #Get keystroke
+                    modifier, key, delay = unpack_from("<BBH",packed_obj,indx+offset*key_stroke_size)
+                    offset += 1
+                    command.append(KeyStroke(modifier,key,delay))
+                else:
+                    #add completed command and reset
+                    final_result.append(command)
+                    indx += offset*key_stroke_size
+                    state= DeserializeState.START_BLOCK
+    return final_result
+
+#Two states used for deserialization
+class DeserializeState(Enum):
+    START_BLOCK = 0
+    KEYSTROKE = 1
 
 
+delay_units = [
+    ("Milliseconds", 0x00),
+    ("Seconds", 0x01)
+]
 
+#keycode modifiers (readable name & bit)
 modifiers = [ 
     ("NONE", 0x00), 
     ("Left Control" , 0x01), 
-    ("Left Shift" , 0x02),
+    ("Left Shift" , L_SHIFT),
     ("Left Alt" , 0x04),
     ("Left Meta" ,0x08),
     ("Right Control" , 0x10),
-    ("Right Shift" , 0x20),
+    ("Right Shift" , R_SHIFT),
     ("Right Alt" , 0x40),
     ("Right Meta" , 0x80)
 ]
 
+#Supported keycodes common to both shift/unshift (readable name & keycode)
 common_keys =[
     ("None",0x00),
     #("Error Roll Over", 0x01) -- This should not occur with implementation -- Reusing key to represent a delay
@@ -110,7 +184,7 @@ common_keys =[
     ("Media Calc",0xfb)
 ]
 
-
+#Supported keycodes which show shifted variant (readable name & keycode)
 shifted_keys  = [
     ("a","A", 0x40),
     ("b","B", 0x05),
