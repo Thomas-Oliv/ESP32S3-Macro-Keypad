@@ -43,10 +43,10 @@ class GridResize(QWidget):
         self.rows = rows
         self.cols = cols
 
-        self.row_widget = SpinInputField("Rows: ",  self.rows, 15)  
+        self.row_widget = SpinInputField("Rows: ",  self.rows, 10)  
         self.row_widget.value_changed.connect(self.__rows_changed)
 
-        self.col_widget = SpinInputField("Cols: ", self.cols, 15)
+        self.col_widget = SpinInputField("Cols: ", self.cols, 10)
         self.col_widget.value_changed.connect(self.__cols_changed)
         
         resize = UIButton("Resize Grid")

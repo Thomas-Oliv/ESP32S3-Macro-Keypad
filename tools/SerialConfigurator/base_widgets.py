@@ -106,6 +106,7 @@ class ConfigComboBox(QWidget):
         layout.addWidget(self.input_field)
 
         self.set_data(data)
+        
         for indx, val in enumerate(data):
             if val[1] == default_code:
                 self.input_field.setCurrentIndex(indx)
