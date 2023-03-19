@@ -21,11 +21,14 @@ Developed on: ESP32-S3-DevKitC1-N32R8V by Expressif
 5) finished USB HID based keypad output
 
 Todo:
+
 *update requirements.txt*
-1) Test and validate USB HID and CDC functionality
-2) Enforce Mutual exclusion on shared resources effectively
-3) Implement loading config from board into app
+
+1) Test and validate USB HID and CDC functionality.
+2) Enforce Mutual exclusion on shared resources effectively.
+3) Implement loading config from board into app.
 4) Investigate delay between config flash and config update being reflected on device.
 
-2) Setup Bluetooth Stack.
-3) Implement OTA Updates.
+5) investigate RAM and task heap/stack usage to optimize memory for smaller ESP32S3 boards.
+6) Setup Bluetooth Stack.
+7) Implement OTA Updates.
