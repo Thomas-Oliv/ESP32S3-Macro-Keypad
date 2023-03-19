@@ -22,7 +22,10 @@ Developed on: ESP32-S3-DevKitC1-N32R8V by Expressif
 
 Todo:
 
-1) Finish and test USB HID features
+1) Test and validate USB HID and CDC functionality
+2) Enforce Mutual exclusion on shared resources effectively
+3) Implement loading config from board into app
+4) Investigate delay between config flash and config update being reflected on device.
 
 2) Setup Bluetooth Stack.
 3) Implement OTA Updates.
