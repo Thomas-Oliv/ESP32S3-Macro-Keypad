@@ -21,7 +21,7 @@ Developed on: ESP32-S3-DevKitC1-N32R8V by Expressif
 5) finished USB HID based keypad output
 
 Todo:
-
+*update requirements.txt*
 1) Test and validate USB HID and CDC functionality
 2) Enforce Mutual exclusion on shared resources effectively
 3) Implement loading config from board into app
