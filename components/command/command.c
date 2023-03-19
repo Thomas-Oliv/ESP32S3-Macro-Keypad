@@ -7,6 +7,7 @@
 #define CMD_SIZE_KEY "cmd_size"
 char key_str [] = "cmd_0";
 
+//TODO: REWRITE
 // HELPER METHODS
 
 char * get_nvs_key(uint8_t indx){
@@ -14,14 +15,14 @@ char * get_nvs_key(uint8_t indx){
     return key_str;
 }
 
-CMD_BLOCK * malloc_cmd_block(uint8_t num_cmds){
-    CMD_BLOCK * blk = malloc(sizeof(uint8_t) + num_cmds*sizeof(KEY_CMD *));
+CMD_BLOCK * malloc_cmd_block(uint16_t num_cmds){
+    CMD_BLOCK * blk = malloc(sizeof(CMD_BLOCK) + num_cmds*sizeof(KEY_CMD *));
     blk->size = num_cmds;
     return blk;
 }
 
-uint8_t get_key_cmd_size( uint8_t num_keys){
-    return num_keys +1;
+uint8_t get_key_cmd_size( uint16_t num_keys){
+    return num_keys*sizeof(KEY_STROKE) +sizeof(uint16_t);
 }
 
 // PUBLIC METHODS
@@ -89,6 +90,7 @@ CMD_BLOCK *  get_cmd_block(){
         cleanup_cmd_block(blk);
         return NULL;
     }
+    traverse_cmd_block(blk);
     return blk;
 }
 
@@ -96,7 +98,6 @@ CMD_BLOCK *  get_cmd_block(){
 esp_err_t save_cmd_block(CMD_BLOCK * blk){
     nvs_handle_t blob_handle;
     esp_err_t err;
-
     err= nvs_open(COMMAND_NAMESPACE,NVS_READWRITE, &blob_handle);
     if (err != ESP_OK) return err;
      
@@ -121,36 +122,22 @@ esp_err_t save_cmd_block(CMD_BLOCK * blk){
     return err;
 }
 
-// TESTING METHODS
-CMD_BLOCK * get_dummy_cmd_block(uint8_t num_cmds, uint8_t num_keys){
-    CMD_BLOCK * blk = malloc_cmd_block(num_cmds);
-
-    for(uint8_t i = 0; i < blk->size; i++)
-    {
-        KEY_CMD * key_cmd = malloc(get_key_cmd_size(num_keys));
-        key_cmd->size = num_keys;
-        for(uint8_t j = 0; j < key_cmd->size ; j++){
-            key_cmd->inputs[j] = 'a'+j;
-        }
-        blk->commands[i] = key_cmd;
-    }
-
-    return blk;
-}
-
 
 void traverse_cmd_block(CMD_BLOCK *  blk){
     printf("number of commands: %zu\n", blk->size);
+    
     for(uint8_t i = 0; i < blk->size; i++)
     {
         printf("Command: %zu\n", i);
         printf("Number Of Keys: %zu\n", blk->commands[i]->size);
-        printf("Inputs: ");
-        for(uint8_t j = 0; j < blk->commands[i]->size ; j++){
-            printf("%c ", blk->commands[i]->inputs[j]);
+        for(int j =0; j <blk->commands[i]->size; j++ ){
+            KEY_STROKE key = blk->commands[i]->inputs[j];
+
+            printf("mod : %X  | code : %X | delay: %X\n", key.modifier, key.key_code,key.delay );
         }
         printf("\n");
     }
+    
     printf("\n");
 }
 
@@ -179,31 +166,4 @@ void get_nvs_info(){
 
     nvs_release_iterator(it);
     printf("\n");
-}
-
-
-void test_cmd(){
-    printf("Testing Creating, Saving, and Reading Command Block\n");
-
-    CMD_BLOCK * dummy = get_dummy_cmd_block(5,3);
-
-    traverse_cmd_block(dummy);
-    esp_err_t err = save_cmd_block(dummy);
-    if(err != ESP_OK)
-    {
-        cleanup_cmd_block(dummy);
-        printf("Error saving: %zu\n", err);
-        return;
-    }
-    cleanup_cmd_block(dummy);
-
-    get_nvs_info();
-    
-    dummy = get_cmd_block();
-    if(dummy == NULL){
-        printf("Failed to get cmd block\n");
-        return;
-    }
-    traverse_cmd_block(dummy);
-    cleanup_cmd_block(dummy);
 }

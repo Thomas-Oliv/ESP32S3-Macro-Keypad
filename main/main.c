@@ -23,22 +23,7 @@ command_task_handle_t*  configure_nvs(){
         printf("configure_nvs: failed to malloc cmd\n");
         return NULL;
     }
-    send_command_control(handle,1);
-    /* TODO: Need to make NVS PERSIST BETWEEN FLASHES
-     while(1)
-    {
-        xSemaphoreTake(handle->mutex, portMAX_DELAY);
-        //keyboard handle has been initialized
-        if(handle->cmds != NULL){
-            xSemaphoreGive(handle->mutex);
-            break;
-        }
-        else {        
-            xSemaphoreGive(handle->mutex);
-            printf("waiting\n");
-            vTaskDelay(100);
-        }
-    }*/
+    send_command_control(handle, 1);
     return handle;
 }
 
@@ -66,33 +51,9 @@ keyboard_task_handle_t * configure_keyboard()
         printf("app_main: failed to create mutex\n");
         return NULL;
     }   
-
-    //Spin up task on CPU 1 to command to install keyboard
-    send_keyboard_control(handle, 1);
-    while(1)
-    {
-        xSemaphoreTake(handle->mutex, portMAX_DELAY);
-        //keyboard handle has been initialized
-        if(handle->kbd_handle != NULL){
-            xSemaphoreGive(handle->mutex);
-            break;
-        }
-        else {        
-            xSemaphoreGive(handle->mutex);
-            vTaskDelay(100);
-        }
-    }
+    send_keyboard_control(handle,1);
     return handle;
 }
-
-void cleanup(hid_handle_t* handle){
-
-
-    handle->keyboard_handle->action = UNINSTALL_KEYBOARD;
-    //Spin up task on CPU 1 to command to uninstall keyboard
-    send_keyboard_control(handle->keyboard_handle, 1);
-}
-
 
 void app_main(void){
 
@@ -101,11 +62,15 @@ void app_main(void){
     command_task_handle_t * nvs_handle = configure_nvs();
     printf("Configured nvs.\n");
     hid_handle_t * hid_handle = malloc(sizeof(hid_handle_t));
+    if(kbd_handle == NULL || nvs_handle == NULL || hid_handle == NULL )
+    {
+        printf("app_main: failed to malloc\n");
+        abort();
+    }
+
     hid_handle->command_handle = nvs_handle;
     hid_handle->keyboard_handle = kbd_handle;
-
-    start_usb_hid_task(hid_handle, 1);
-    printf("Started usb hid.\n");
-    //cleanup(kbd_handle, nvs_handle);
+    // Start Receiving input
+    start_usb_task(hid_handle, 3);
+    printf("Configured Usb.\n");
 }
-

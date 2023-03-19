@@ -97,3 +97,5 @@ void send_to_queue(matrix_kbd_handle_t mkbd_handle, void * arg);
 void receive_from_queue(matrix_kbd_handle_t mkbd_handle, void * arg);
 
 uint32_t get_indx(matrix_kbd_handle_t handle, uint32_t key_code);
+
+uint32_t get_size(matrix_kbd_handle_t handle);

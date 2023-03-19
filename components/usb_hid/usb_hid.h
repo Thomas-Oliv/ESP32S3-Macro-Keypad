@@ -7,4 +7,4 @@ typedef struct hid_handle_t{
 } hid_handle_t;
 
 
-TaskHandle_t start_usb_hid_task(hid_handle_t * handle , BaseType_t priority);
+TaskHandle_t start_usb_task(hid_handle_t * handle , BaseType_t priority);

@@ -5,7 +5,7 @@ Developed on: ESP32-S3-DevKitC1-N32R8V by Expressif
 
 # Project Goal(s)
 
-- Create a USB or Bluetooth Keypad which allows for single or multiple keystroke inputs at the press of a single button.
+- Create a USB and Bluetooth Keypad which allows for single or multiple keystroke inputs at the press of a single button.
     - For example: At the press of a single button, the device could simulate they keyboard input "Hello World!".
 - Responsive Keypad. No missed input and minimal input-delay.
 - Robust and easy to follow firmware.
@@ -17,12 +17,12 @@ Developed on: ESP32-S3-DevKitC1-N32R8V by Expressif
 1) Task-based interface for NVS storage.
 2) Interrupt driven keypad matrix control and output generation.
 3) Task-based interface for keypad matrix.
+4) python application to customize and flash custom macros to board
+5) finished USB HID based keypad output
 
 Todo:
-1) Extract command based on key and send data up through USB or Bluetooth stack to generate macro key output.
-    1) Setup Bluetooth/USB HID Stack.
-    2) Consume keystroke and integrate NVS command data into HID output.
-2) Write new commands to NVS over USB or Bluetooth.
-    1) Implement Interface on Host.
-    2) Implement Service on Device.
+
+1) Finish and test USB HID features
+
+2) Setup Bluetooth Stack.
 3) Implement OTA Updates.
