@@ -1,6 +1,6 @@
 from enum import Enum
 from struct import pack, unpack, unpack_from
-from crc import Calculator, Crc16
+from crccheck.crc import CrcXmodem
 import serial
 
 L_SHIFT = 0x02
@@ -29,23 +29,39 @@ class Device():
         self.data= [[]]*self.rows*self.cols
 
 def flash( device_port, device:Device):
-    calculator = Calculator(Crc16.CCITT)
     packed_obj, total_size = serialize_data(device.data)
-    crc = calculator.checksum(packed_obj)
+    crc = CrcXmodem.calc(packed_obj)
     with serial.Serial(port=device_port) as s:
-        sync_msg = pack("<BBLH",0xFF, 0x01, total_size, crc)
+        sync_msg = pack("<HLH",0xFF01, total_size, crc)
         s.write(sync_msg)
-        # expect sync to be echo'd
+        # expect sync_msg to be echo'd
         res = s.read(8)
         if(res == sync_msg):
             s.write(packed_obj)
-            # echo crc once we have read all data
-            res = s.read(2)
-            if(unpack("<H",s.read(2)) == crc):
+            # get crc calculated on board
+            crc_result = unpack("<H", s.read(2))[0]
+            #validate crc
+            if(crc_result == crc):
                 return True
     return False
 
 def load(device_port):
+    with serial.Serial(port= device_port) as s:
+        sync_msg = pack("<H",0xFF10)
+        s.write(sync_msg)
+        # expect crc, length (in bytes), and number of rows+cols to be returned
+        res = s.read(8)
+        crc_expected, length, num_rows, num_cols = unpack("<HLBB",res)
+        print("{} - {} - {} - {}", crc_expected, length, num_rows, num_cols)
+        return 
+        packed_obj = s.read(length)
+        calculator = Calculator(Crc16.CCITT)
+        crc_calc = calculator.checksum(packed_obj)
+        if(crc_calc == crc_expected):
+            return deserialize_data(packed_obj, length), num_rows, num_cols
+    return [], 0 , 0
+
+def load2(device_port):
     with serial.Serial(port= device_port) as s:
         sync_msg = pack("<BB",0xFF,0x10)
         s.write(sync_msg)
@@ -53,8 +69,7 @@ def load(device_port):
         res = s.read(8)
         crc_expected, length, num_rows, num_cols = unpack("<HLBB",res)
         packed_obj = s.read(length)
-        calculator = Calculator(Crc16.CCITT)
-        crc_calc = calculator.checksum(packed_obj)
+        crc_calc = CrcXmodem.calc(packed_obj)
         if(crc_calc == crc_expected):
             return deserialize_data(packed_obj, length), num_rows, num_cols
     return [], 0 , 0
@@ -80,6 +95,8 @@ def serialize_data(data: list[list[KeyStroke]]):
     for command in data:
         size = 0
         packed_keycode = b''
+        if len(command) == 0:
+            command.append(KeyStroke(0x00,0x00,0x00))
         for keystroke in command:
             #pack keystrokes and keep track of number of keystrokes stored
             packed_keycode += pack("<BBH",keystroke.modifier,keystroke.key_code,keystroke.delay)
@@ -218,7 +235,7 @@ common_keys =[
 
 #Supported keycodes which show shifted variant (readable name & keycode)
 shifted_keys  = [
-    ("a","A", 0x40),
+    ("a","A", 0x04),
     ("b","B", 0x05),
     ("c","C", 0x06),
     ("d","D", 0x07),
@@ -246,7 +263,7 @@ shifted_keys  = [
     ("z","Z", 0x1d),
     ("1","!", 0x2e),
     ("2","@", 0x1f),
-    ("34","#", 0x20),
+    ("3","#", 0x20),
     ("4","$", 0x21),
     ("5","%", 0x22),
     ("6","^", 0x23),

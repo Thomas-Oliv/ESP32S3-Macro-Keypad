@@ -23,7 +23,7 @@ command_task_handle_t*  configure_nvs(){
         printf("configure_nvs: failed to malloc cmd\n");
         return NULL;
     }
-    send_command_control(handle, 3);
+    send_command_control(handle, 1);
     return handle;
 }
 

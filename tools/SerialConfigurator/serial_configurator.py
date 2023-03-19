@@ -48,6 +48,7 @@ class MainWindow(QMainWindow):
         self.widget.setLayout(layout)
         self.setCentralWidget(self.widget)
 
+
     def __hwid_changed(self, input_str:str):
         self.device.hwid = input_str
 
@@ -143,7 +144,7 @@ class MainWindow(QMainWindow):
         self.resize_widget.set_text(self.device.rows,self.device.cols )
         self.grid_widget.set_size(self.device.rows ,self.device.cols)
 
-    def __flash_complete(self, is_success):
+    def __flash_complete(self, is_success: bool):
         if is_success:
             self.__send_alert("Flash Status", "Device was successfully flashed.", QMessageBox.Icon.NoIcon)
         else:

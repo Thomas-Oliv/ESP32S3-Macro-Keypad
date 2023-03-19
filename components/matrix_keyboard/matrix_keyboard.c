@@ -391,3 +391,7 @@ uint32_t get_indx(matrix_kbd_handle_t handle, uint32_t key_code){
     // add column;
     return result + GET_KEY_CODE_COL(key_code);
 }
+
+uint32_t get_size(matrix_kbd_handle_t handle){
+    return handle->config.nr_col_gpios* handle->config.nr_row_gpios;
+}
