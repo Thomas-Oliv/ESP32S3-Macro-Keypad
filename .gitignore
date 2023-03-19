@@ -42,6 +42,8 @@
 *.idb
 *.pdb
 
+*.pickle
+
 # Kernel Module Compile Results
 *.mod*
 *.cmd
@@ -56,4 +58,3 @@ managed_components/
 dependencies.lock
 tools/__pycache__/
 
-tools/*.pickle

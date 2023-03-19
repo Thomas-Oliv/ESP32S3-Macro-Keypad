@@ -1,5 +1,7 @@
 from enum import Enum
-from struct import pack, unpack_from
+from struct import pack, unpack, unpack_from
+from crc import Calculator, Crc16
+import serial
 
 L_SHIFT = 0x02
 R_SHIFT = 0x20
@@ -14,7 +16,6 @@ class KeyStroke():
         self.key_code:int = code    #keycode or delay id
         self.delay:int = delay_time #delay amount
 
-
 class Device():
     hwid: str
     rows: int
@@ -26,6 +27,37 @@ class Device():
         self.rows=rows
         self.cols=cols
         self.data= [[]]*self.rows*self.cols
+
+def flash( device_port, device:Device):
+    calculator = Calculator(Crc16.CCITT)
+    packed_obj, total_size = serialize_data(device.data)
+    crc = calculator.checksum(packed_obj)
+    with serial.Serial(port=device_port) as s:
+        sync_msg = pack("<BBLH",0xFF, 0x01, total_size, crc)
+        s.write(sync_msg)
+        # expect sync to be echo'd
+        res = s.read(8)
+        if(res == sync_msg):
+            s.write(packed_obj)
+            # echo crc once we have read all data
+            res = s.read(2)
+            if(unpack("<H",s.read(2)) == crc):
+                return True
+    return False
+
+def load(device_port):
+    with serial.Serial(port= device_port) as s:
+        sync_msg = pack("<BB",0xFF,0x10)
+        s.write(sync_msg)
+        # expect crc, length (in bytes), and number of rows+cols to be returned
+        res = s.read(8)
+        crc_expected, length, num_rows, num_cols = unpack("<HLBB",res)
+        packed_obj = s.read(length)
+        calculator = Calculator(Crc16.CCITT)
+        crc_calc = calculator.checksum(packed_obj)
+        if(crc_calc == crc_expected):
+            return deserialize_data(packed_obj, length), num_rows, num_cols
+    return [], 0 , 0
 
 
 def get_key_dropdown_values(modifier ):

@@ -1,9 +1,6 @@
-import os
-from PyQt6.QtCore import pyqtSignal, Qt
-from PyQt6.QtWidgets import  QWidget, QGridLayout, QHBoxLayout , QDialog, QVBoxLayout, QScrollArea
-from usb_hid import *
+from PyQt6.QtCore import Qt, pyqtSlot, QRunnable, QObject
+from PyQt6.QtWidgets import  QWidget, QGridLayout, QDialog, QVBoxLayout, QScrollArea
 from base_widgets import *
-
 # N x M grid of buttons which relate 1:1 to keypad button
 class ButtonGrid(QWidget):
     clicked_pos = pyqtSignal(int,int)
@@ -226,4 +223,30 @@ class ConfigCheckBoxRowGroup(QWidget):
             self.__modifier &= ~id
         
         self.modifier_changed.emit(self.__modifier, ( id == L_SHIFT or id == R_SHIFT))
+    
+
+class WorkerSignals(QObject):
+    result = pyqtSignal(object)
+    error = pyqtSignal()
+
+class Worker(QRunnable):
+    result = pyqtSignal(object)
+    def __init__(self, fn, *args, **kwargs):
+        super().__init__()
+        # Store constructor arguments (re-used for processing)
+        self.fn = fn
+        self.args = args
+        self.kwargs = kwargs
+        self.signals = WorkerSignals()
+
+    @pyqtSlot()
+    def run(self):
+        try:
+            result = self.fn(
+                *self.args, **self.kwargs
+            )
+            self.signals.result.emit(result)  # Done
+        except:
+            self.signals.error.emit()
+            
         

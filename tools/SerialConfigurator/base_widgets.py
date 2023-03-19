@@ -1,8 +1,7 @@
-import os
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import QLabel,QWidget,QPushButton, QSizePolicy, QHBoxLayout ,QLineEdit, QSpinBox, QCheckBox, QComboBox
 from PyQt6.QtGui import QFont
-from usb_hid import *
+from helper import *
 
 MAX_W = 1000
 MAX_H = 800
@@ -106,7 +105,7 @@ class ConfigComboBox(QWidget):
         layout.addWidget(self.input_field)
 
         self.set_data(data)
-        
+
         for indx, val in enumerate(data):
             if val[1] == default_code:
                 self.input_field.setCurrentIndex(indx)
